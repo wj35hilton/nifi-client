@@ -115,7 +115,8 @@ class Templates implements Map<String, Template> {
 
         StringBody body = new StringBody((file as File).text)
         nifi.http.request(POST) { request ->
-            uri.path = '/nifi-api/controller/templates'
+            // TODO support other process groups than root
+            uri.path = '/nifi-api/process-groups/root/templates/upload'
 
             requestContentType = 'multipart/form-data'
             MultipartEntity entity = new MultipartEntity()
@@ -126,6 +127,7 @@ class Templates implements Map<String, Template> {
                 switch (resp.statusLine.statusCode) {
                     case 200:
                         // TODO Template already exists, perhaps we can delete and re-import here
+                        throw new Exception("Template already exists -- $file")
                         break
                     case 201:
                         // Template was created successfully
@@ -146,11 +148,11 @@ class Templates implements Map<String, Template> {
     def reload() {
         synchronized (this.templateIdMap) {
             this.templateIdMap.clear()
-            def procs = slurper.parseText("${nifi.urlString}/nifi-api/controller/templates".toURL().text).templates
+            def procs = slurper.parseText("${nifi.urlString}/nifi-api/flow/templates".toURL().text).templates
             def map = this.templateIdMap
             def n = this.nifi
             procs.each { p ->
-                map.put(p.name, new Template(n, p))
+                map.put(p.template.name, new Template(n, p))
             }
         }
     }

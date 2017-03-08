@@ -110,7 +110,7 @@ class Processors implements Map<String, Processor> {
 
     def reload() {
         synchronized (this.processorIdMap) {
-            def procs = slurper.parseText("${nifi.urlString}/nifi-api/controller/process-groups/${processGroup ?: 'root'}/processors".toURL().text).processors
+            def procs = slurper.parseText("${nifi.urlString}/nifi-api/process-groups/${processGroup ?: 'root'}/processors".toURL().text).processors
             def map = this.processorIdMap
             // TODO clear the map?
             def n = this.nifi

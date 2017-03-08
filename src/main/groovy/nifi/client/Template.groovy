@@ -19,16 +19,17 @@ import groovy.json.JsonSlurper
 import static groovyx.net.http.Method.DELETE
 import static groovyx.net.http.Method.POST
 import static groovyx.net.http.ContentType.URLENC
+import static groovyx.net.http.ContentType.JSON
 
 /**
  * Created by mburgess on 12/30/15.
  */
-class Template implements Map<String, String> {
+class Template implements Map<String, Object> {
     NiFi nifi
     private final JsonSlurper slurper = new JsonSlurper()
-    protected Map<String, String> propertyMap = [:]
+    protected Map<String, Object> propertyMap = [:]
 
-    protected Template(NiFi nifi, Map<String, String> propMap) {
+    protected Template(NiFi nifi, Map<String, Object> propMap) {
         super()
         this.nifi = nifi
         this.propertyMap = propMap
@@ -55,28 +56,28 @@ class Template implements Map<String, String> {
     }
 
     @Override
-    String get(Object key) {
+    Object get(Object key) {
         return propertyMap.get(key)
     }
 
     @Override
-    String put(String key, String value) {
-        throw new UnsupportedOperationException('Processor property Map is immutable (for now)')
+    String put(String key, Object value) {
+        throw new UnsupportedOperationException('Template property Map is immutable (for now)')
     }
 
     @Override
     String remove(Object key) {
-        throw new UnsupportedOperationException('Processor property Map is immutable (for now)')
+        throw new UnsupportedOperationException('Template property Map is immutable (for now)')
     }
 
     @Override
     void putAll(Map<? extends String, ? extends String> m) {
-        throw new UnsupportedOperationException('Processor property Map is immutable (for now)')
+        throw new UnsupportedOperationException('Template property Map is immutable (for now)')
     }
 
     @Override
     void clear() {
-        throw new UnsupportedOperationException('Processor property Map is immutable (for now)')
+        throw new UnsupportedOperationException('Template property Map is immutable (for now)')
     }
 
     @Override
@@ -95,24 +96,29 @@ class Template implements Map<String, String> {
     }
 
     def instantiate() {
-        def tID = this.id
+        def tId = this.id
         def n = this.nifi
         try {
-            // Need to get latest revision
-            def latestVersion = nifi.currentVersion
-
             nifi.http.request(POST) {
-                uri.path = '/nifi-api/controller/process-groups/root/template-instance'
-                send URLENC,
-                        [version   : latestVersion,
-                         templateId: tID,
-                         originX   : '10',
-                         originY   : '100']
+                // TODO: other process groups besides root
+                uri.path = '/nifi-api/process-groups/root/template-instance'
+
+                requestContentType = JSON
+
+                body = [
+                  templateId: tId,
+                  // TODO: ability to specify position
+                  originX   : 200,
+                  originY   : 300]
 
                 response.success = { instanceResp ->
+                // TODO: processors are nested ... which level should we be reloading here?
                     n.processors.reload()
                 }
-                response.'404' = { throw new Exception("Couldn't find template with ID $tID") }
+
+                response.'404' = { resp ->
+                    throw new Exception("Error [${resp.statusLine}] instantiating template with ID $tID: ${resp.getData()}")
+                }
             }
         } catch (e) {
             e.printStackTrace(System.err)
@@ -120,8 +126,8 @@ class Template implements Map<String, String> {
     }
 
     def delete() {
-        def deleteId = this.id
-        nifi.http.request(DELETE) { uri.path="/nifi-api/controller/templates/$deleteId" }
+        def deleteUri = this.template.uri
+        nifi.http.request(DELETE) { uri.path=deleteUri }
         nifi.templates.reload()
     }
 
