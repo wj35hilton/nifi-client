@@ -13,7 +13,7 @@
  * limitations under the License.
  *
  ******************************************************************************/
-package nifi.client.controller
+package nifi.client
 
 import groovy.json.JsonSlurper
 import nifi.client.NiFi
@@ -35,7 +35,6 @@ class ProcessGroup implements Map<String, Object> {
         this.nifi = nifi
         this.propertyMap.putAll(propMap)
         this.propertyMap.put('parentId',parentId)
-        this.propertyMap.put('groups', new HashMap<String,ProcessGroup>())
     }
 
     @Override
@@ -60,7 +59,7 @@ class ProcessGroup implements Map<String, Object> {
 
     @Override
     Object get(Object key) {
-        if('groups'.equals(key)) getGroups()
+        if('groups'.equals(key)) propertyMap.put('groups', new ProcessGroups(nifi, id))
         if('processors'.equals(key)) propertyMap.put('processors', new Processors(nifi, id))
         return propertyMap.get(key)
     }
@@ -103,16 +102,6 @@ class ProcessGroup implements Map<String, Object> {
     def set(Map props) {
         // Set the properties on the ProcessGroup and update it
 
-    }
-
-    def getGroups() {
-        NiFi n = this.nifi
-        def pm = this.propertyMap
-        new JsonSlurper().parseText("${n.urlString}/nifi-api/controller/process-groups/${id}/process-group-references"
-                .toURL().text)?.processGroups?.each { g ->
-            pm.get('groups').put(g.name, new ProcessGroup(n, g as Map, this.id))
-        }
-        pm.get('groups')
     }
 
     def start() {

@@ -13,7 +13,7 @@
  * limitations under the License.
  *
  ******************************************************************************/
-package nifi.client.controller
+package nifi.client
 
 import groovy.json.JsonSlurper
 import nifi.client.NiFi
@@ -103,13 +103,13 @@ class ProcessGroups implements Map<String, ProcessGroup> {
 
     def reload() {
         def pGroup = processGroup ?: 'root'
-        println "Fetching ${nifi.urlString}/nifi-api/controller/process-groups/${pGroup}"
+        println "Fetching ${nifi.urlString}/nifi-api/process-groups/${pGroup}/process-groups"
         synchronized (this.processorGroupMap) {
-            def procs = slurper.parseText("${nifi.urlString}/nifi-api/controller/process-groups/${pGroup}".toURL().text).processGroups
+            def procs = slurper.parseText("${nifi.urlString}/nifi-api/process-groups/${pGroup}/process-groups".toURL().text).processGroups
             def map = this.processorGroupMap
             def n = this.nifi
             procs.each { p ->
-                map.put(p.name, new ProcessGroup(n, p))
+                map.put(p.component.name, new ProcessGroup(n, p as Map, pGroup))
             }
         }
     }

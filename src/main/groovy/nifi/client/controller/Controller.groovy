@@ -34,7 +34,6 @@ class Controller {
     ProcessorTypes processorTypes
     ReportingTaskTypes reportingTaskTypes
     History history
-    ProcessGroup root
     Provenance provenance
     private final JsonSlurper slurper = new JsonSlurper()
     private clientId
@@ -54,7 +53,6 @@ class Controller {
         this.processorTypes = new ProcessorTypes(nifi)
         this.reportingTaskTypes = new ReportingTaskTypes(nifi)
         this.history = new History(nifi)
-        this.root = new ProcessGroup(nifi, [name:'root', id:'root'], null)
         this.provenance = new Provenance(nifi)
     }
 

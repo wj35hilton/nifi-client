@@ -24,6 +24,7 @@ import nifi.client.controller.Controller
  */
 class NiFi {
     String urlString
+    ProcessGroup root
     Processors processors
     Templates templates
     Controller controller
@@ -37,6 +38,7 @@ class NiFi {
         this.http = this.http = new HTTPBuilder(url)
         this.processors = new Processors(this, 'root')
         this.templates = new Templates(this)
+        this.root = new ProcessGroup(this, [name:'root', id:'root'], null)
         this.controller = new Controller(this)
         this.system = new SystemDiagnostics(this)
     }
