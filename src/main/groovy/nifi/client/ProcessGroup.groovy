@@ -20,6 +20,7 @@ import nifi.client.NiFi
 import nifi.client.Processors
 
 import static groovyx.net.http.ContentType.URLENC
+import static groovyx.net.http.ContentType.JSON
 import static groovyx.net.http.Method.PUT
 
 /**
@@ -102,6 +103,26 @@ class ProcessGroup implements Map<String, Object> {
     def set(Map props) {
         // Set the properties on the ProcessGroup and update it
 
+    }
+
+    def newGroup(String groupName) {
+      def resp = nifi.http.post(path: "/nifi-api/process-groups/${propertyMap.id}/process-groups",
+                                requestContentType: JSON,
+                                body: [
+                                  revision:[
+                                    version:0
+                                  ],
+                                  component: [
+                                    name: groupName,
+                                    // TODO: specify position ...
+                                    position: [
+                                      x: 0,
+                                      y: 300
+                                    ]
+                                  ]
+                                ])
+
+      return resp.id
     }
 
     def start() {
